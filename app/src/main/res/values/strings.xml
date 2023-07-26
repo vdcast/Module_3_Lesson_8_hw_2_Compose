@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">Module_3_Lesson_8_hw_2_Compose</string>
+    <string name="text_title">Guess The Time</string>
+    <string name="text_description">Click on button START to start random timer from 5 to 20 seconds. You need to count the passed time and guess it.\nGood luck!</string>
+    <string name="button_start">START</string>
+    <string name="button_check">CHECK</string>
+    <string name="your_guess">Your Guess</string>
 </resources>
