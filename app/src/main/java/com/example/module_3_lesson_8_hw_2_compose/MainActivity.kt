@@ -38,7 +38,6 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.module_3_lesson_8_hw_2_compose.ui.theme.Cyan10
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -62,14 +61,11 @@ class MainActivity : ComponentActivity() {
 fun MyApp(
     viewModelMain: MainViewModel = viewModel()
 ) {
-
-    var isCountingDown by remember { mutableStateOf(false) }
     var inputNumber by remember { mutableStateOf("") }
     var isInputEmpty by remember { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
 
-    val coroutineScope = rememberCoroutineScope()
-
+    val correctNumber by viewModelMain.randomNumberInt
     val isStartedGame by viewModelMain.isStartedGame
     val isReadyToCheck by viewModelMain.isReadyToCheck
     val isFinishedGame by viewModelMain.isFinishedGame
@@ -97,23 +93,23 @@ fun MyApp(
             textAlign = TextAlign.Center,
             fontFamily = FontFamily.Monospace
         )
-        Button(
-            modifier = Modifier
-                .fillMaxWidth(0.5f)
-                .padding(vertical = dimensionResource(id = R.dimen.padding_medium)),
-            onClick = {
-                coroutineScope.launch {
-                    isCountingDown = true
-                    delay(3000L)  // change this to your countdown duration
-                    isCountingDown = false
-                }
-            })
-        { Text(text = stringResource(id = R.string.button_start))}
 
         AnimatedVisibility(visible = !isStartedGame && !isReadyToCheck && !isFinishedGame) {
-            CircularProgressIndicator()
+            Button(
+                modifier = Modifier
+                    .fillMaxWidth(0.5f)
+                    .padding(vertical = dimensionResource(id = R.dimen.padding_medium)),
+                onClick = {
+                    viewModelMain.startGame()
+                })
+            { Text(text = stringResource(id = R.string.button_start))}
         }
-        AnimatedVisibility(visible = !isCountingDown) {
+        AnimatedVisibility(visible = isStartedGame && !isReadyToCheck && !isFinishedGame) {
+            CircularProgressIndicator(
+                modifier = Modifier.padding(vertical = dimensionResource(id = R.dimen.padding_medium))
+            )
+        }
+        AnimatedVisibility(visible = !isStartedGame && isReadyToCheck && !isFinishedGame) {
             Column(
                 modifier = Modifier.fillMaxWidth(0.5f),
                 horizontalAlignment = Alignment.CenterHorizontally
@@ -136,20 +132,45 @@ fun MyApp(
                     ),
                     isError = isInputEmpty
                 )
-
                 Button(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = dimensionResource(id = R.dimen.padding_medium)),
                     onClick = {
-
-                    })
+                        viewModelMain.checkNumber(inputNumber.toInt())
+                    },
+                    enabled = inputNumber.isNotEmpty()
+                )
                 { Text(text = stringResource(id = R.string.button_check))}
             }
         }
-
-        AnimatedVisibility(visible = !isCountingDown) {
-
+        AnimatedVisibility(visible = !isStartedGame && !isReadyToCheck && isFinishedGame) {
+            Column(
+                modifier = Modifier.fillMaxWidth(0.5f),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = stringResource(id = R.string.result_of_game, if (result) "won! :)" else "lost."),
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Text(
+                    text = stringResource(id = R.string.your_answer, inputNumber),
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Text(
+                    text = stringResource(id = R.string.correct_number, correctNumber),
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Button(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = dimensionResource(id = R.dimen.padding_medium)),
+                    onClick = {
+                        inputNumber = ""
+                        viewModelMain.startGame()
+                    })
+                { Text(text = stringResource(id = R.string.button_try_again))}
+            }
         }
     }
 }

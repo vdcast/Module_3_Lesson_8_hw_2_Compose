@@ -1,9 +1,12 @@
 package com.example.module_3_lesson_8_hw_2_compose
 
+import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class MainViewModel : ViewModel() {
@@ -12,29 +15,32 @@ class MainViewModel : ViewModel() {
     val isReadyToCheck = mutableStateOf(false)
     val isFinishedGame = mutableStateOf(false)
 
-    private val randomNumberInt = mutableStateOf(0)
-    private val randomNumberLongDelay = mutableStateOf(0L)
+    val randomNumberInt = mutableStateOf(0)
 
     val result = mutableStateOf(false)
 
-    private fun getRandomNumber() {
+    private fun getRandomNumber(): Int {
         val randomNumber = (5..20).random()
-        randomNumberInt.value = randomNumber
-        randomNumberLongDelay.value = randomNumber.toLong() * 1_000
+        Log.d("MYLOG", randomNumber.toString())
+        return randomNumber
     }
 
-    suspend fun startGame() {
-        getRandomNumber()
-        withContext(Dispatchers.IO) {
-            isFinishedGame.value = false
-            isStartedGame.value = true
-            delay(randomNumberLongDelay.value)
-            isStartedGame.value = false
-            isReadyToCheck.value = true
+    fun startGame() {
+        viewModelScope.launch {
+            val randomNumber = getRandomNumber()
+            withContext(Dispatchers.Main) {
+                isFinishedGame.value = false
+                isStartedGame.value = true
+            }
+            delay(randomNumber.toLong() * 1_000)
+            withContext(Dispatchers.Main) {
+                randomNumberInt.value = randomNumber
+                isStartedGame.value = false
+                isReadyToCheck.value = true
+            }
         }
     }
-
-    fun finishGame(guess: Int) {
+    fun checkNumber(guess: Int) {
         isReadyToCheck.value = false
         isFinishedGame.value = true
         result.value = guess == randomNumberInt.value
